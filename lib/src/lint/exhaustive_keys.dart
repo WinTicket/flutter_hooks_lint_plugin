@@ -524,6 +524,7 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
       case 'useEffect':
       case 'useMemoized':
       case 'useCallback':
+      case 'useFlagEffect':
         if (arguments.isNotEmpty) {
           // useMemoized(() { ... });
           if (arguments.length == 1) {
