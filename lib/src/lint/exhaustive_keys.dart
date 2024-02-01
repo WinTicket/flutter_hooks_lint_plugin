@@ -556,13 +556,16 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
         }
         break;
       case 'useFlagEffect':
-        if (arguments.length == 3 || arguments.length == 4) {
+        print('XXX useFlagEffect $arguments');
+        if (arguments.length == 3 && arguments[2] is ListLiteral) {
           // useFlagEffect(flag: ..., onFlagOn: () { ... }, [...]);
+          log.finest('_HooksVisitor: hooks with positional keys literal');
+          type = _HookType.positionalKeysLiteral;
+        }
+        if (arguments.length == 4 && arguments[3] is ListLiteral) {
           // useFlagEffect(flag: ..., onFlagOn: () { ... }, onFlagOff: () { ... }, [...]);
-          if (arguments[2] is ListLiteral || arguments[3] is ListLiteral) {
-            log.finest('_HooksVisitor: hooks with positional keys literal');
-            type = _HookType.positionalKeysLiteral;
-          }
+          log.finest('_HooksVisitor: hooks with positional keys literal');
+          type = _HookType.positionalKeysLiteral;
         }
         break;
     }
