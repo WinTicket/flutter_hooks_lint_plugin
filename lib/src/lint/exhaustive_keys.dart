@@ -162,9 +162,11 @@ class Key {
       Key(idents, context.inferKind(idents));
 
   final List<SimpleIdentifier> _idents;
+
   List<SimpleIdentifier> get idents => _idents;
 
   final KeyKind _kind;
+
   KeyKind get kind => _kind;
 
   Element? get rootElement => _idents.first.staticElement;
@@ -524,7 +526,6 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
       case 'useEffect':
       case 'useMemoized':
       case 'useCallback':
-      case 'useFlagEffect':
         if (arguments.isNotEmpty) {
           // useMemoized(() { ... });
           if (arguments.length == 1) {
@@ -553,6 +554,17 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
             }
           }
         }
+        break;
+      case 'useFlagEffect':
+        if (arguments.length == 3 || arguments.length == 4) {
+          // useFlagEffect(flag: ..., onFlagOn: () { ... }, [...]);
+          // useFlagEffect(flag: ..., onFlagOn: () { ... }, onFlagOff: () { ... }, [...]);
+          if (arguments[2] is ListLiteral || arguments[3] is ListLiteral) {
+            log.finest('_HooksVisitor: hooks with positional keys literal');
+            type = _HookType.positionalKeysLiteral;
+          }
+        }
+        break;
     }
 
     if (type == _HookType.unknown) return;
@@ -565,7 +577,7 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
     // find identifiers in the hook's keys
     switch (type) {
       case _HookType.positionalKeysLiteral:
-        final keys = arguments[1];
+        final keys = arguments.last;
 
         log.finest(
             '_HooksVisitor: find identifiers in the positional keys literal');
@@ -640,7 +652,7 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
           break;
 
         case _HookType.positionalKeysLiteral:
-          final keys = arguments[1] as ListLiteral;
+          final keys = arguments.last as ListLiteral;
           fixes.add(LintFix.appendListElement(
             message: 'Add missing "$key" key',
             literal: keys,
@@ -668,7 +680,7 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
 
       switch (type) {
         case _HookType.positionalKeysLiteral:
-          final keys = arguments[1] as ListLiteral;
+          final keys = arguments.last as ListLiteral;
           final index =
               keys.elements.indexWhere((e) => e.toSource() == key.toString());
           if (index != -1) {
@@ -700,7 +712,7 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
       if (key.kind == KeyKind.localFunction) {
         switch (type) {
           case _HookType.positionalKeysLiteral:
-            final keys = arguments[1] as ListLiteral;
+            final keys = arguments.last as ListLiteral;
             onReport(
               LintErrorFunctionKey(
                 key.toString(),
