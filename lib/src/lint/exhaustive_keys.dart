@@ -613,8 +613,9 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
       );
 
       final body = arguments
-          .firstOrNullWhere((element) => element is FunctionExpression);
-      body?.visitChildren(visitor);
+              .firstOrNullWhere((element) => element is FunctionExpression) ??
+          arguments[0];
+      body.visitChildren(visitor);
 
       expectedKeys.addAll(visitor.keys);
     }
