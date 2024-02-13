@@ -2,8 +2,8 @@ import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:flutter_hooks_lint_plugin/src/lint/config.dart';
-import 'package:flutter_hooks_lint_plugin/src/lint/utils/cache.dart';
 import 'package:flutter_hooks_lint_plugin/src/lint/hook_widget_visitor.dart';
+import 'package:flutter_hooks_lint_plugin/src/lint/utils/cache.dart';
 import 'package:flutter_hooks_lint_plugin/src/lint/utils/iterable.dart';
 import 'package:flutter_hooks_lint_plugin/src/lint/utils/lint_error.dart';
 import 'package:logging/logging.dart';
@@ -559,6 +559,8 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
       case 'useFlagOnEffect':
       case 'useFlagOffEffect':
         if (arguments.isNotEmpty) {
+          log.finest('_HooksVisitor: hooks with omitted positional keys');
+          type = _HookType.omittedPositionalKeys;
           // useFlagOnEffect(flag, () {...}, [...]);
           // useFlagOffEffect(flag, () {...}, [...]);
           if (arguments.length == 3) {
@@ -566,7 +568,6 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
             type = _HookType.positionalKeysExpression;
             final keys = arguments[2];
             if (keys is ListLiteral) {
-              print('useFlagOnEffect $keys');
               log.finest('_HooksVisitor: hooks with positional keys literal');
               type = _HookType.positionalKeysLiteral;
             }
