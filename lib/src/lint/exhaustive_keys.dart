@@ -4,6 +4,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:flutter_hooks_lint_plugin/src/lint/config.dart';
 import 'package:flutter_hooks_lint_plugin/src/lint/utils/cache.dart';
 import 'package:flutter_hooks_lint_plugin/src/lint/hook_widget_visitor.dart';
+import 'package:flutter_hooks_lint_plugin/src/lint/utils/iterable.dart';
 import 'package:flutter_hooks_lint_plugin/src/lint/utils/lint_error.dart';
 import 'package:logging/logging.dart';
 
@@ -555,17 +556,21 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
           }
         }
         break;
-      case 'useFlagEffect':
-        print('XXX useFlagEffect $arguments');
-        if (arguments.length == 3 && arguments[2] is ListLiteral) {
-          // useFlagEffect(flag: ..., onFlagOn: () { ... }, [...]);
-          log.finest('_HooksVisitor: hooks with positional keys literal');
-          type = _HookType.positionalKeysLiteral;
-        }
-        if (arguments.length == 4 && arguments[3] is ListLiteral) {
-          // useFlagEffect(flag: ..., onFlagOn: () { ... }, onFlagOff: () { ... }, [...]);
-          log.finest('_HooksVisitor: hooks with positional keys literal');
-          type = _HookType.positionalKeysLiteral;
+      case 'useFlagOnEffect':
+      case 'useFlagOffEffect':
+        if (arguments.isNotEmpty) {
+          // useFlagOnEffect(flag, () {...}, [...]);
+          // useFlagOffEffect(flag, () {...}, [...]);
+          if (arguments.length == 3) {
+            log.finest('_HooksVisitor: hooks with positional keys');
+            type = _HookType.positionalKeysExpression;
+            final keys = arguments[2];
+            if (keys is ListLiteral) {
+              print('useFlagOnEffect $keys');
+              log.finest('_HooksVisitor: hooks with positional keys literal');
+              type = _HookType.positionalKeysLiteral;
+            }
+          }
         }
         break;
     }
@@ -606,8 +611,9 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
         onlyBuildVaribles: true,
       );
 
-      final body = arguments[0];
-      body.visitChildren(visitor);
+      final body = arguments
+          .firstOrNullWhere((element) => element is FunctionExpression);
+      body?.visitChildren(visitor);
 
       expectedKeys.addAll(visitor.keys);
     }
