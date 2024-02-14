@@ -649,6 +649,64 @@ void main() {
         LintErrorMatcher.fixes([' dep2,']),
       ]);
     });
+
+    test('report useFlagOnEffect', () async {
+      final source = '''
+        class TestWidget extends HookConsumerWidget {
+          const TestWidget({
+            Key? key,
+            required this.dep,
+          }): super(key: key);
+
+          final String dep;
+
+          @override
+          Widget build(BuildContext context, WidgetRef ref) {
+            useFlagOnEffect(
+              flags[flagIntroduceLiquidShield]!,
+                  () {
+                print(dep);
+              },
+              [],
+            );
+            return Text('TestWidget');
+          }
+        }
+      ''';
+
+      final errors = await _findErrors(source);
+
+      expect(errors, [LintErrorMissingKeyMatcher('dep', 'class field')]);
+    });
+
+    test('report useFlagOffEffect', () async {
+      final source = '''
+        class TestWidget extends HookConsumerWidget {
+          const TestWidget({
+            Key? key,
+            required this.dep,
+          }): super(key: key);
+
+          final String dep;
+
+          @override
+          Widget build(BuildContext context, WidgetRef ref) {
+            useFlagOffEffect(
+              flags[flagIntroduceLiquidShield]!,
+                  () {
+                print(dep);
+              },
+              [],
+            );
+            return Text('TestWidget');
+          }
+        }
+      ''';
+
+      final errors = await _findErrors(source);
+
+      expect(errors, [LintErrorMissingKeyMatcher('dep', 'class field')]);
+    });
   });
 
   group('unnecessary keys', () {
@@ -833,6 +891,60 @@ void main() {
       final errors = await _findErrors(source);
 
       expect(errors, []);
+    });
+
+    test('report useFlagOnEffect unused variable reference', () async {
+      final source = '''
+        import 'dart:math';
+        class TestWidget extends HookWidget {
+          const TestWidget({
+            Key? key,
+          }): super(key: key);
+          @override
+          Widget build(BuildContext context) {
+            final dep = Random();
+            useFlagOnEffect(
+              flags[flagIntroduceLiquidShield]!,
+                  () {
+                print('Hello');
+              },
+              [dep],
+            );
+            return Text('TestWidget');
+          }
+        }
+      ''';
+
+      final errors = await _findErrors(source);
+
+      expect(errors, [LintErrorUnnecessaryKeyMatcher('dep', 'local variable')]);
+    });
+
+    test('report useFlagOffEffect unused variable reference', () async {
+      final source = '''
+        import 'dart:math';
+        class TestWidget extends HookWidget {
+          const TestWidget({
+            Key? key,
+          }): super(key: key);
+          @override
+          Widget build(BuildContext context) {
+            final dep = Random();
+            useFlagOffEffect(
+              flags[flagIntroduceLiquidShield]!,
+                  () {
+                print('Hello');
+              },
+              [dep],
+            );
+            return Text('TestWidget');
+          }
+        }
+      ''';
+
+      final errors = await _findErrors(source);
+
+      expect(errors, [LintErrorUnnecessaryKeyMatcher('dep', 'local variable')]);
     });
   });
 
