@@ -29,7 +29,7 @@ void main() {
   setUpLogging();
 
   group('missing keys', () {
-    test('report class property reference', () async {
+    test('report class property reference: useEffect', () async {
       final source = '''
         class TestWidget extends HookWidget {
           const TestWidget({
@@ -42,6 +42,32 @@ void main() {
           @override
           Widget build(BuildContext context) {
             useEffect(() {
+              print(dep);
+            }, []);
+
+            return Text('TestWidget');
+          }
+        }
+      ''';
+
+      final errors = await _findErrors(source);
+
+      expect(errors, [LintErrorMissingKeyMatcher('dep', 'class field')]);
+    });
+
+    test('report class property reference: useMeasurableEffect', () async {
+      final source = '''
+        class TestWidget extends HookWidget {
+          const TestWidget({
+            Key? key,
+            required this.dep,
+          }): super(key: key);
+
+          final String dep;
+
+          @override
+          Widget build(BuildContext context) {
+            useMeasurableEffect(() {
               print(dep);
             }, []);
 
@@ -82,6 +108,33 @@ void main() {
       expect(errors, [LintErrorMissingKeyMatcher('dep', 'local variable')]);
     });
 
+    test('report local variable reference: useMeasurableEffect', () async {
+      final source = '''
+        import 'dart:math';
+
+        class TestWidget extends HookWidget {
+          const TestWidget({
+            Key? key,
+          }): super(key: key);
+
+          @override
+          Widget build(BuildContext context) {
+            final dep = Random();
+
+            useMeasurableEffect(() {
+              print(dep);
+            }, []);
+
+            return Text('TestWidget');
+          }
+        }
+      ''';
+
+      final errors = await _findErrors(source);
+
+      expect(errors, [LintErrorMissingKeyMatcher('dep', 'local variable')]);
+    });
+
     test('report local function reference', () async {
       final source = '''
         import 'dart:math';
@@ -98,6 +151,35 @@ void main() {
             }
 
             useEffect(() {
+              dep();
+            }, []);
+
+            return Text('TestWidget');
+          }
+        }
+      ''';
+
+      final errors = await _findErrors(source);
+
+      expect(errors, [LintErrorMissingKeyMatcher('dep', 'local function')]);
+    });
+
+    test('report local function reference: useMeasurableEffect', () async {
+      final source = '''
+        import 'dart:math';
+
+        class TestWidget extends HookWidget {
+          const TestWidget({
+            Key? key,
+          }): super(key: key);
+
+          @override
+          Widget build(BuildContext context) {
+            void dep() {
+              print('hello');
+            }
+
+            useMeasurableEffect(() {
               dep();
             }, []);
 
@@ -262,6 +344,32 @@ void main() {
           @override
           Widget build(BuildContext context) {
             final test = useCallback(() {
+              print(dep);
+            }, []);
+
+            return Text('TestWidget');
+          }
+        }
+      ''';
+
+      final errors = await _findErrors(source);
+
+      expect(errors, [LintErrorMissingKeyMatcher('dep', 'class field')]);
+    });
+
+    test('report useMeasurableEffect', () async {
+      final source = '''
+        class TestWidget extends HookWidget {
+          const TestWidget({
+            Key? key,
+            required this.dep,
+          }): super(key: key);
+
+          final String dep;
+
+          @override
+          Widget build(BuildContext context) {
+            final test = useMeasurableEffect(() {
               print(dep);
             }, []);
 
@@ -663,6 +771,29 @@ void main() {
           Widget build(BuildContext context) {
             final dep = Random();
             useEffect(() {
+              print('Hello');
+            }, [dep]);
+            return Text('TestWidget');
+          }
+        }
+      ''';
+
+      final errors = await _findErrors(source);
+
+      expect(errors, [LintErrorUnnecessaryKeyMatcher('dep', 'local variable')]);
+    });
+
+    test('report unused variable reference: useMeasurableEffect', () async {
+      final source = '''
+        import 'dart:math';
+        class TestWidget extends HookWidget {
+          const TestWidget({
+            Key? key,
+          }): super(key: key);
+          @override
+          Widget build(BuildContext context) {
+            final dep = Random();
+            useMeasurableEffect(() {
               print('Hello');
             }, [dep]);
             return Text('TestWidget');
