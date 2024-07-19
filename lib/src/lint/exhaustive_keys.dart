@@ -524,6 +524,7 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
       case 'useEffect':
       case 'useMemoized':
       case 'useCallback':
+      case 'useMeasurableEffect':
         if (arguments.isNotEmpty) {
           // useMemoized(() { ... });
           if (arguments.length == 1) {
@@ -531,9 +532,15 @@ class _HooksVisitor extends RecursiveAstVisitor<void> {
             type = _HookType.omittedPositionalKeys;
 
             // useEffect(() { ... });
-            if (node.methodName.name == 'useEffect') {
+            if (node.methodName.name == 'useEffect' || node.methodName.name == 'useMeasurableEffect') {
               log.finest(
                   '_HooksVisitor: useEffect with omitted positional keys');
+              return;
+            }
+
+            if (node.methodName.name == 'useMeasurableEffect') {
+              log.finest(
+                  '_HooksVisitor: useMeasurableEffect with omitted positional keys');
               return;
             }
           }
